@@ -54,4 +54,7 @@ struct HomeView: View {
 #Preview {
     HomeView()
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> d3b9658cd6a86ce4e8fe5956bcc3057967a107d8

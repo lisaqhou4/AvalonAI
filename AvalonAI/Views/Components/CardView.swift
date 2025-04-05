@@ -39,6 +39,7 @@ struct CardView: View {
 }
 
 #Preview {
+<<<<<<< HEAD
     ZStack {
         Rectangle().background(Color.black)
             .scaledToFill()
@@ -47,4 +48,7 @@ struct CardView: View {
 //        CardView(card: Card(role: "Merlin"), title: "Player 1")
         CardView(card: Card(role: "Merlin", isPlayer: true))
     }
+=======
+    CardView(card: Card(title: "Knight", color: .blue))
+>>>>>>> d3b9658cd6a86ce4e8fe5956bcc3057967a107d8
 }
