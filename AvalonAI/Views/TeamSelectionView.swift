@@ -9,19 +9,14 @@ import SwiftUI
 
 struct TeamSelectionView: View {
     @EnvironmentObject var game: Game
-    @State private var path: [Route] = []
+    @Binding var path: [Route]
 
-    enum Route: Hashable {
-        case gameBoard
-    }
     let allPlayers = ["Player 1", "Player 2", "Player 3", "Player 4", "Yourself"]
 
     @State private var selectedPlayers: Set<Int> = []
 
     var body: some View {
         let size = teamSize[game.nextEmptyQuestIndex()]
-        
-        NavigationStack(path: $path) {
             ZStack {
                 Image("bg_in_game")
                     .resizable()
@@ -73,7 +68,7 @@ struct TeamSelectionView: View {
                                 }
                             }
                             .cornerRadius(10)
-                            .frame(width: 200)
+                            .frame(width: 100)
                         }
                         .disabled(!selectedPlayers.contains(index) && selectedPlayers.count >= size)
                     }
@@ -81,53 +76,16 @@ struct TeamSelectionView: View {
                     Button(action: {
                         path.append(.gameBoard)
                     }) {
-                        Text("Cancel")
-                            .padding()
-                            .frame(maxWidth: 150)
-                            .background(
-                                LinearGradient(
-                                    gradient: Gradient(stops: [
-                                        .init(color: Color.black.opacity(0), location: 0.0),
-                                        .init(color: Color.black.opacity(1), location: 0.5),
-                                        .init(color: Color.black.opacity(0), location: 1.0),
-                                    ]),
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
+                        BlackShadowText(text: "Cancel", width: 150.0)
                     }
                     Button(action: {
                         game.teamSelection = selectedPlayers
+                        path.append(.gameBoard)
                     }) {
-                        Text("Confirm")
-                            .padding()
-                            .frame(maxWidth: 150)
-                            .background(
-                                LinearGradient(
-                                    gradient: Gradient(stops: [
-                                        .init(color: Color.black.opacity(0), location: 0.0),
-                                        .init(color: Color.black.opacity(1), location: 0.5),
-                                        .init(color: Color.black.opacity(0), location: 1.0),
-                                    ]),
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
+                        BlackShadowText(text: "Confirm", width: 150.0)
                     }
                 }
             }
-            .navigationDestination(for: Route.self) { route in
-                switch route {
-                    case .gameBoard:
-                        GameBoardView()
-                }
-            }
-        }
-        
         }
     }
 
@@ -142,5 +100,5 @@ struct TeamSelectionView: View {
 
 
 #Preview {
-    TeamSelectionView().environmentObject(Game())
+    TeamSelectionView(path: .constant([])).environmentObject(Game())
 }

@@ -2,67 +2,37 @@ import SwiftUI
 
 struct GameBoardView: View {
     @EnvironmentObject var game: Game
+    @Binding var path: [Route]
 
     var body: some View {
         let currQuest = game.nextEmptyQuestIndex()
-        GeometryReader { geometry in
-            ZStack (alignment: .topLeading) {
-                Image("bg_in_game")
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
-                VStack (alignment: .leading){
-                    HStack {
-                        titleLayout(currQuest: currQuest)
-                    }.frame(width: geometry.size.width)
-                    HStack (alignment: .top, spacing: 0){
-                        playerLayout(cards: game.cards, leader: game.leader)
-                        bubbleLayout(index: 3, message: "Hello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaa Hello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaaHello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaa Hello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaaHello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaa Hello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaa Hello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaaHello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaa Hello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaaHello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaa ")
-                    }
-                    chatLayout()
-                    Spacer()
-                    HStack {
-                        portraitLayout()
-                        questLayout()
-                        Button {
-                            // open team selection
-                        } label: {
-                            if game.teamSelection.count > 0 {
-                                VStack {
-                                    Text("Leader purposed the following team:")
-                                        .foregroundColor(.white)
-                                    ForEach(Array(game.teamSelection), id: \.self) { player in
-                                        Text(player)
-                                            .foregroundColor(.white)
-                                    }
-                                }.padding(5)
-                                    .shadow(color: .black.opacity(0.8), radius: 5, x: 0, y: 3)
+            GeometryReader { geometry in
+                ZStack (alignment: .topLeading) {
+                    Image("bg_in_game")
+                        .resizable()
+                        .scaledToFill()
+                        .ignoresSafeArea()
+                    VStack (alignment: .leading){
+                        HStack {
+                            titleLayout(currQuest: currQuest)
+                        }.frame(width: geometry.size.width)
+                        PlayersView(cards: game.cards, leader: game.leader, index: 3, message: "Hello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaa Hello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaaHello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaa Hello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaaHello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaa Hello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaa Hello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaaHello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaa Hello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaaHello World aaaaaaaaaaaaaaa aaaaaaaaaaa  aaaaa ")
+                        chatLayout()
+                        Spacer()
+                        HStack {
+                            portraitLayout()
+                            questLayout()
+                            if game.phase == 0 {
+                                TeamVoteView(path: $path)
                             } else {
-                                if game.leader == game.cards.count - 1 {
-                                    Text("Build Your Team")
-                                        .foregroundColor(.white)
-                                        .padding(5)
-                                        .background(Color.black)
-                                        .cornerRadius(10)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 10)
-                                                .stroke(Color.white, lineWidth: 1)
-                                        )
-                                        .shadow(color: .black.opacity(0.8), radius: 5, x: 0, y: 3)
-                                } else {
-                                    Text("Waiting for the leader to build the team...")
-                                        .foregroundColor(.white)
-                                        .padding(5)
-                                        .shadow(color: .black.opacity(0.8), radius: 5, x: 0, y: 3)
-                                }
+                                QuestVoteView(path: $path)
                             }
                         }
-                    }
-                }.frame(width: geometry.size.width, height: geometry.size.height)
-                
+                    }.frame(width: geometry.size.width, height: geometry.size.height)
+                    
+                }
             }
         }
-    }
     
     private func questLayout() -> some View {
         VStack {
@@ -212,13 +182,13 @@ struct GameBoardView: View {
 }
 
 
+struct GameBoardView_Previews: PreviewProvider {
+    static var previews: some View {
+        let game = Game()
+        game.teamSelection = Set([0, 1, 2])
+        game.goToQuestPhase()
 
-#Preview {
-    let game = Game()
-    game.teamSelection = Set([0,1,2])
-    
-    return ZStack {
-        GameBoardView()
+        return GameBoardView(path: .constant([]))
             .environmentObject(game)
     }
 }

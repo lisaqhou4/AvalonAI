@@ -7,11 +7,22 @@
 
 import SwiftUI
 
+struct Triangle: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.midX, y: rect.minY))    // top point
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY)) // bottom right
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY)) // bottom left
+        path.closeSubpath()
+        return path
+    }
+}
+
 struct PlayersView: View {
     let cards: [Card]
     let leader: Int
-    var message: String = ""
     var index: Int = 0
+    var message: String = ""
 
     var body: some View {
         HStack (alignment: .top, spacing: 0){
@@ -54,7 +65,5 @@ struct PlayersView: View {
 
 
 #Preview {
-    let game = Game()
-    game.teamSelection = Set([0,1])
-    return PlayersView(cards: game.cards, leader: 0, message: "aaaaa")
+    PlayersView(cards: Game().cards, leader: 0, message: "aaaaa")
 }

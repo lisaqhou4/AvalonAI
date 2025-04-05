@@ -1,27 +1,35 @@
 import SwiftUI
 
+
+enum Route: Hashable {
+    case voteResult
+    case questResult
+    case gameBoard
+    case playerRole
+    case teamSelection
+}
 struct HomeView: View {
-    @State private var showPlayerRole = false
     @StateObject private var game = Game()
+    @State private var path: [Route] = []
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             ZStack {
                 Image("bg_home")
                     .resizable()
                     .scaledToFill()
                     .ignoresSafeArea()
-
+                
                 VStack(spacing: 20) {
                     Text("AVALON")
                         .font(.custom("MedievalSharp", size: 48))
                         .foregroundColor(.yellow)
                         .shadow(radius: 3)
-
+                    
                     // Start Game Button
                     Button {
                         game.reset()
-                        showPlayerRole = true
+                        path.append(.playerRole)
                     } label: {
                         Text("Start Game")
                             .padding()
@@ -42,12 +50,23 @@ struct HomeView: View {
                     }
                 }
             }
-            .navigationDestination(isPresented: $showPlayerRole) {
-                PlayerRoleView()
-                    .environmentObject(game)
+            .navigationDestination(for: Route.self) { route in
+                switch route {
+                case .playerRole:
+                    PlayerRoleView(path: $path)
+                case .voteResult:
+                    VoteResultView(path: $path)
+                case .gameBoard:
+                    GameBoardView(path: $path)
+                case .teamSelection:
+                    TeamSelectionView(path: $path)
+                case .questResult:
+                    QuestResultView(path: $path)
+                default:
+                    EmptyView()
+                }
             }
-        }
-        .environmentObject(game)
+        }.environmentObject(game)
     }
 }
 
