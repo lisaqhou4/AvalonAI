@@ -20,13 +20,21 @@ config_list = [
 
 # Define role descriptions (hidden from players)
 role_descriptions = {
-    "Merlin": "You are Merlin. You have knowledge of who the evil agents are. Your goal is to help the good team win the quests without revealing your identity.",
-    "Percival": "You are Percival. You know who Merlin is, but cannot distinguish between Morgana and Merlin. Your goal is to help the good team win quests.",
-    "LoyalServant_1": "You are a Loyal Servant of Arthur. You have no special knowledge. Your goal is to help the good team win quests based on logic and observation.",
-    "LoyalServant_2": "You are a Loyal Servant of Arthur. You have no special knowledge. Your goal is to help the good team win quests based on logic and observation.",
-    "Assassin": "You are the Assassin. You know who the evil agents are. Your goal is to sabotage quests and, at the end of the game, identify and assassinate Merlin.",
-    "Morgana": "You are Morgana. You appear as Merlin to Percival. Your goal is to sabotage quests and cause confusion among the good team."
+    "Merlin": "Your role is Merlin. You have knowledge of who the evil agents are. Your goal is to help the good team win the quests without revealing your identity.",
+    "Percival": "Your role is Percival. You know who Merlin is, but cannot distinguish between Morgana and Merlin. Your goal is to help the good team win quests.",
+    "LoyalServant_1": "Your role is Loyal Servant of Arthur_1. You have no special knowledge. Your goal is to help the good team win quests based on logic and observation.",
+    "LoyalServant_2": "Your role is Loyal Servant of Arthur_2. You have no special knowledge. Your goal is to help the good team win quests based on logic and observation.",
+    "Assassin": "Your role is Assassin. You know who the evil agents are. Your goal is to sabotage quests and, at the end of the game, identify and assassinate Merlin.",
+    "Morgana": "Your role is Morgana. You appear as Merlin to Percival. Your goal is to sabotage quests and cause confusion among the good team."
 }
+
+def get_game_context_string(agent_name: str) -> str:
+    other_players = [name for name in players_names if name != agent_name]
+    return (
+        f"Your name is {agent_name}. You are a player in the social deduction game Resistance: Avalon.\n"
+        f"In the current game, there are 6 players including you. The other 5 players are: {', '.join(other_players)}."
+    )
+
 
 # Randomly assign roles to generic agent names
 roles = ["Merlin", "Percival", "LoyalServant_1", "LoyalServant_2", "Assassin", "Morgana"]
@@ -39,38 +47,64 @@ players_names = ["AgentA", "AgentB", "AgentC", "AgentD", "AgentE", "User"]
 # Create agents and store role mappings
 agent_A = autogen.AssistantAgent(
     name="AgentA",
-    system_message=INTRODUCTION + "\n\n" + role_descriptions[roles[0]] + "\n" + TUTORIAL_STRATEGIES_PROMPTS_ZERO_SHOT.get(roles[0].replace("LoyalServant_1", "Servant").replace("LoyalServant_2", "Servant"), [""])[0],
+    system_message=(
+        get_game_context_string("AgentA") + "\n\n"
+        + INTRODUCTION + "\n\n"
+        + TUTORIAL_STRATEGIES_PROMPTS_ZERO_SHOT.get(roles[0], [""])[0]
+    ),
     llm_config={"config_list": config_list},
 )
+
+
 players_with_roles[players_names[0]] = roles[0]
 
 agent_B = autogen.AssistantAgent(
     name="AgentB",
-    system_message=INTRODUCTION + "\n\n" + role_descriptions[roles[1]] + "\n" + TUTORIAL_STRATEGIES_PROMPTS_ZERO_SHOT.get(roles[1].replace("LoyalServant_1", "Servant").replace("LoyalServant_2", "Servant"), [""])[0],
+    system_message=(
+        get_game_context_string("AgentB") + "\n\n"
+        + INTRODUCTION + "\n\n"
+        + TUTORIAL_STRATEGIES_PROMPTS_ZERO_SHOT.get(roles[1], [""])[0]
+    ),
     llm_config={"config_list": config_list},
 )
-players_with_roles[players_names[1]] = roles[1]
+players_with_roles["AgentB"] = roles[1]
+
 
 agent_C = autogen.AssistantAgent(
     name="AgentC",
-    system_message=INTRODUCTION + "\n\n" + role_descriptions[roles[2]] + "\n" + TUTORIAL_STRATEGIES_PROMPTS_ZERO_SHOT.get(roles[2].replace("LoyalServant_1", "Servant").replace("LoyalServant_2", "Servant"), [""])[0],
+    system_message=(
+        get_game_context_string("AgentC") + "\n\n"
+        + INTRODUCTION + "\n\n"
+        + TUTORIAL_STRATEGIES_PROMPTS_ZERO_SHOT.get(roles[2], [""])[0]
+    ),
     llm_config={"config_list": config_list},
 )
-players_with_roles[players_names[2]] = roles[2]
+players_with_roles["AgentC"] = roles[2]
+
 
 agent_D = autogen.AssistantAgent(
     name="AgentD",
-    system_message=INTRODUCTION + "\n\n" + role_descriptions[roles[3]] + "\n" + TUTORIAL_STRATEGIES_PROMPTS_ZERO_SHOT.get(roles[3].replace("LoyalServant_1", "Servant").replace("LoyalServant_2", "Servant"), [""])[0],
+    system_message=(
+        get_game_context_string("AgentD") + "\n\n"
+        + INTRODUCTION + "\n\n"
+        + TUTORIAL_STRATEGIES_PROMPTS_ZERO_SHOT.get(roles[3], [""])[0]
+    ),
     llm_config={"config_list": config_list},
 )
-players_with_roles[players_names[3]] = roles[3]
+players_with_roles["AgentD"] = roles[3]
+
 
 agent_E = autogen.AssistantAgent(
     name="AgentE",
-    system_message=INTRODUCTION + "\n\n" + role_descriptions[roles[4]] + "\n" + TUTORIAL_STRATEGIES_PROMPTS_ZERO_SHOT.get(roles[4].replace("LoyalServant_1", "Servant").replace("LoyalServant_2", "Servant"), [""])[0],
+    system_message=(
+        get_game_context_string("AgentE") + "\n\n"
+        + INTRODUCTION + "\n\n"
+        + TUTORIAL_STRATEGIES_PROMPTS_ZERO_SHOT.get(roles[4], [""])[0]
+    ),
     llm_config={"config_list": config_list},
 )
-players_with_roles[players_names[4]] = roles[4]
+players_with_roles["AgentE"] = roles[4]
+
 
 
 # Assign a role to the user
@@ -154,7 +188,7 @@ def initialize_game():
         if name != "User":
             agent = get_player_object(name)
             user_proxy.send(
-                message=f"Your role is: {role}. {role_descriptions[role]}",
+                message=f"{role_descriptions[role]}",
                 recipient=agent
             )
         else:
@@ -163,7 +197,7 @@ def initialize_game():
     # 2. Share role-specific knowledge
     if merlin.name != user_player.name:
         user_proxy.send(
-            message=f"You are Merlin. You know the evil agents are: {assassin.name} and {morgana.name}",
+            message=f"Your role is Merlin. You know the evil agents are: {assassin.name} and {morgana.name}",
             recipient=merlin
         )
     else:
@@ -173,7 +207,7 @@ def initialize_game():
 
     if percival.name != user_player.name:
         user_proxy.send(
-            message=f"You are Percival. You see both {merlin.name} and {morgana.name} as potential Merlins and cannot distinguish between them.",
+            message=f"Your role is Percival. You see both {merlin.name} and {morgana.name} as potential Merlins and cannot distinguish between them.",
             recipient=percival
         )
     else:
@@ -191,7 +225,7 @@ def initialize_game():
 
     if user_player.role in ["Assassin", "Morgana"]:
         evil_teammates = [a.name for a in evil_team if a.name != user_player.name]
-        print(f"As an evil agent, your evil teammate is: {', '.join(evil_teammates)}")
+        print(f"As an evil role, your evil teammate is: {', '.join(evil_teammates)}")
         for teammate in evil_teammates:
             user_player.add_teammate(teammate)
 
@@ -200,6 +234,7 @@ def initialize_game():
     for name, role in players_with_roles.items():
         print(f"{name} is {role}")
     print("=============================================")
+    return players_with_roles
 
 # Format conversation history into a readable string
 def format_conversation_history(history):
@@ -211,6 +246,7 @@ def format_conversation_history(history):
 # Modify the run_quest function to use all_players
 # Run a quest with the selected players
 def run_quest(selected_agents, conversation_history):
+    
     print("\n=== QUEST BEGINS ===\n")
     print(f"Selected players for this quest: {', '.join([a if isinstance(a, str) else a.name for a in selected_agents])}")
 
@@ -225,7 +261,8 @@ def run_quest(selected_agents, conversation_history):
 
     # Get votes from selected players
     for agent in selected_agents:
-        if isinstance(agent, str):
+        print(agent)
+        if isinstance(agent, Player):
             # Handle user input for voting
             while True:
                 user_vote = input("You are on the quest. Do you want the quest to SUCCEED or FAIL? (Type 'SUCCEED' or 'FAIL'): ").strip().upper()
@@ -248,7 +285,7 @@ def run_quest(selected_agents, conversation_history):
                 vote_prompt = "You are on the quest. As a good agent, you must make the quest succeed. Respond with just 'SUCCEED'."
 
             # Get agent's vote
-            print(agent)
+            # print(agent)
             vote = agent.generate_reply(
                 messages=[
                     {"role": "user", "content": history_text},
@@ -331,7 +368,7 @@ def determine_turn_order():
     print(f"[TURN INFO] Quest Leader is: {quest_leader_name}")
     return ordered_names, quest_leader_name
 
-def select_team_members(ordered_names, quest_leader_name, conversation_history, round_number=1,team_size=3, is_initial=True):
+def select_team_members(ordered_names, quest_leader_name, conversation_history,team_size=3, current_quest_number= 1, current_voting_attempt=1):
     def get_agent(name):
         return user_player if name == "User" else next(a for a in all_agents if a.name == name)
 
@@ -340,47 +377,42 @@ def select_team_members(ordered_names, quest_leader_name, conversation_history, 
     history_text = format_conversation_history(conversation_history)
 
     if quest_leader_name == "User":
-        if is_initial:
-            print("You are the Quest Leader. Please give your speech first.")
-            user_speech = input("You (speech): ")
-            conversation_history.append({"speaker": "You", "message": user_speech})
+        print("You are the Quest Leader. Please give your speech first.")
+        user_speech = input("You (speech): ")
+        conversation_history.append({"speaker": "You", "message": user_speech})
 
-            print("Now please select your initial team.")
-            initial_team = select_agents_for_quest(is_initial=True, team_size=team_size)
-            print(f"Your selected team: {', '.join([a if isinstance(a, str) else a.name for a in initial_team])}")
-            return initial_team, conversation_history
-
-        else:
-            print("You are the Quest Leader. Please select the final team.")
-            final_team = select_agents_for_quest(is_initial=False, team_size=team_size)
-            print(f"Your selected final team: {', '.join([a if isinstance(a, str) else a.name for a in final_team])}")
-            return final_team, conversation_history
+        print("Now please select your initial team.")
+        initial_team = select_agents_for_quest(is_initial=True, team_size=team_size)
+        print(f"Your selected team: {', '.join([a if isinstance(a, str) else a.name for a in initial_team])}")
+        return initial_team, conversation_history
 
     else:
-        if is_initial:
-            round_intro = (
-                f"ROUND {round_number}:\n"
-                f"- Quest Leader: {quest_leader_name}\n"
-                f"- Required team size: {team_size}\n"
-                f"- Speech order: {', '.join(rotated_order)}\n"
-                f"- The leader will now propose a team."
-            )
-            for agent in all_agents:
-                user_proxy.send(message=round_intro, recipient=agent)
-            print(f"[GameMaster]: {round_intro}")
+        round_intro = (
+            f"Quest {current_quest_number} is underway.\n"
+            f"- The current Quest Leader is: {quest_leader_name}\n"
+            f"- Required team size: {team_size}\n"
+            f"- Voting attempt #{current_voting_attempt} for this quest.\n"
+            f"    → We've already failed to approve a team {current_voting_attempt - 1} time{'s' if current_voting_attempt - 1 != 1 else ''}.\n"
+            f"    → If we fail to approve a team 3 times in a row, the 3rd proposed team will automatically go on the quest, regardless of the vote outcome.\n"
+            f"- Players will now speak in the following order: {', '.join(rotated_order)}\n"
+            f"- The leader will propose a team after delivering an opening speech."
+        )
 
-            print(f"({quest_leader_name}) is the Quest Leader who will propose an initial team...")
+        for agent in all_agents:
+            user_proxy.send(message=round_intro, recipient=agent)
+        print(f"[GameMaster]: {round_intro}")
 
-            # Step 1: Leader gives speech
-            opening_speech = leader_agent.generate_reply([
-                {"role": "user", "content": history_text},
-                {"role": "user", "content": CHOOSE_TEAM_LEADER + CHOOSE_TEAM_ACTION.format(team_size, 'E') + DISCUSSION_SUFFIX}
-            ])
-            print(f"{quest_leader_name} (speech): {opening_speech}\n---")
-            conversation_history.append({"speaker": quest_leader_name, "message": opening_speech})
+        print(f"({quest_leader_name}) is the Quest Leader who will propose an initial team...")
 
-        else:
-            print(f"({quest_leader_name}) is now proposing the final team after everyone's opinion...")
+        # Step 1: Leader gives speech
+        opening_speech = leader_agent.generate_reply([
+            {"role": "user", "content": history_text},
+            {"role": "user", "content": CHOOSE_TEAM_LEADER + CHOOSE_TEAM_ACTION.format(team_size, 'E') + DISCUSSION_SUFFIX}
+        ])
+        print(f"{quest_leader_name} (speech): {opening_speech}\n---")
+        conversation_history.append({"speaker": quest_leader_name, "message": opening_speech})
+
+
 
         # Step 2: Leader selects team
         history_text = format_conversation_history(conversation_history)
@@ -547,32 +579,33 @@ def assassin_guess_merlin(conversation_history):
 
 
 def run_game():
-    initialize_game()
+    players_with_roles = initialize_game()
     conversation_history = []
     turn_order, current_leader = determine_turn_order()
-    team_size = 2  # This could vary per round if you wish
+    team_sizes = [2, 3, 4, 3, 4]  # team sizes for each round
     total_quests = 5
     quest_results.clear()
-    round_number = 1
+
 
     while len(quest_results) < total_quests:
         print(f"\n=== QUEST ROUND {len(quest_results) + 1} START ===")
 
         max_voting_rounds = 3
-        voting_attempts = 0
+        voting_attempts = 1
         final_team = None
 
         while voting_attempts < max_voting_rounds:
             print(f"\n[Team Selection Attempt {voting_attempts + 1} of {max_voting_rounds}]")
 
             # Leader selects a team
+            current_team_size = team_sizes[len(quest_results)]
             final_team, conversation_history = select_team_members(
                 ordered_names=turn_order,
                 quest_leader_name=current_leader,
                 conversation_history=conversation_history,
-                round_number=round_number,
-                team_size=team_size,
-                is_initial=(voting_attempts == 0)
+                team_size=current_team_size,
+                current_quest_number=len(quest_results) + 1,
+                current_voting_attempt=voting_attempts
             )
 
             # Discussion always happens after each leader proposes a team
@@ -585,13 +618,14 @@ def run_game():
                 print("\nTeam approved. Proceeding to quest.")
                 break
             else:
-                voting_attempts += 1
+                
                 if voting_attempts < max_voting_rounds:
                     print("\nTeam rejected. Passing leadership to the next player...")
                     current_index = turn_order.index(current_leader)
                     current_leader = turn_order[(current_index + 1) % len(turn_order)]
-                    round_number += 1
+                    voting_attempts += 1
                     print(f"\nNew Quest Leader: {current_leader}")
+            
                 else:
                     print("\n[Max voting attempts reached] Leader's final team proceeds without vote.")
 
@@ -608,7 +642,7 @@ def run_game():
         # Rotate leader for next round
         current_index = turn_order.index(current_leader)
         current_leader = turn_order[(current_index + 1) % len(turn_order)]
-        round_number += 1
+
 
     # Final Result
     good_wins = sum(quest_results)
