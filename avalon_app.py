@@ -20,8 +20,7 @@ DEFAULT_PROMPT = "You are a player in Avalon. Play to your role's objectives bas
 # Configure a termination message
 termination_msg = "GAME OVER"
 
-API_KEY = "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"
-
+API_KEY = ""
 config_list = [
     {
         "model": "gpt-4",
