@@ -14,8 +14,7 @@ This project implements a Streamlit-based web interface for the social deduction
 ### 1. Clone this Repository
 
 ```bash
-git clone https://github.com/yourusername/avalon-llm-app.git
-cd avalon-llm-app
+git clone https://github.com/Rachelz1231/AvalonAI.git
 ```
 
 ### 2. Create and Activate Virtual Environment (Recommended)
