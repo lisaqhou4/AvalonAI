@@ -20,7 +20,7 @@ DEFAULT_PROMPT = "You are a player in Avalon. Play to your role's objectives bas
 # Configure a termination message
 termination_msg = "GAME OVER"
 
-API_KEY = ""
+API_KEY = "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"
 
 config_list = [
     {
@@ -33,8 +33,8 @@ role_descriptions = {
     "Percival": "Your role is Percival. You know two players: one is Merlin, and the other is Morgana (who also appears as Merlin to you). Your goal is to help Good win 3 quests. Try to identify and protect the real Merlin.",
     "LoyalServant_1": "Your role is a Loyal Servant of Arthur. You have no special knowledge initially. Your goal is to help Good win 3 quests by deducing who is good and evil.",
     "LoyalServant_2": "Your role is a Loyal Servant of Arthur. You have no special knowledge initially. Your goal is to help Good win 3 quests by deducing who is good and evil.",
-    "Assassin": "Your role is the Assassin (a Minion of Mordred). You know your fellow evil players. Your goal is to make 3 quests fail. If Good wins 3 quests, you get one chance to assassinate Merlin to win the game for Evil.",
-    "Morgana": "Your role is Morgana (a Minion of Mordred). You know your fellow evil players. You appear as Merlin to Percival. Your goal is to make 3 quests fail and to confuse Percival."
+    "Assassin": "Your role is the Assassin (a Minion of Mordred). You know your fellow evil players. Your goal is to make 3 quests fail. If Good wins 3 quests, you get one chance to assassinate Merlin to win the game for Evil. You should not reveal your identity as the Assasin during your round of speech.",
+    "Morgana": "Your role is Morgana (a Minion of Mordred). You know your fellow evil players. You appear as Merlin to Percival. Your goal is to make 3 quests fail and to confuse Percival. You should not reveal your identity as Morgana during your round of speech."
 }
 
 # --- Helper Functions (Adapted for Streamlit) ---
@@ -60,11 +60,25 @@ def get_player_object_by_name(name_or_agent: Union[str, Player, autogen.Agent]):
         return None
     return next((agent for agent in st.session_state.all_agents_list if agent.name == name_or_agent), None)
 
-def format_conversation_history_st(history):
+def format_conversation_history_st_(history):
     if not history:
         return "No conversation history yet."
     formatted = "#### Conversation History:\n"
     for entry in history:
+        formatted += f"**{entry['speaker']}**: {entry['message']}\n\n"
+    return formatted
+
+def format_conversation_history_st(history, max_entries=20):
+    """
+    Converts conversation history to a readable string format for prompts.
+    Only keeps the last `max_entries` messages to stay within token limits.
+    """
+    if not history:
+        return "No conversation history yet."
+
+    trimmed_history = history[-max_entries:]  # Keep last N messages
+    formatted = "#### Conversation History:\n"
+    for entry in trimmed_history:
         formatted += f"**{entry['speaker']}**: {entry['message']}\n\n"
     return formatted
 
@@ -78,7 +92,7 @@ def format_conversation_history_st(history):
 def initialize_game_st():
     st.session_state.game_log = ["Game Initializing..."] # Ensure it's initialized at the start of this function
     
-    roles = ["Merlin", "Percival", "LoyalServant_1", "LoyalServant_2", "Assassin", "Morgana"]
+    roles = ["Merlin", "Percival", "LoyalServant_1", "LoyalServant_2", "Morgana", "Assassin"]
     random.shuffle(roles)
 
     st.session_state.players_names = ["AgentA", "AgentB", "AgentC", "AgentD", "AgentE", "User"]
@@ -325,6 +339,64 @@ def select_team_members_st():
             st.rerun() # Replaced experimental_rerun
 
 def speech_round_st():
+    current_speaker_name = st.session_state.speech_turn_order[st.session_state.current_speaker_idx]
+    current_speaker_role = st.session_state.players_with_roles.get(current_speaker_name, "Unknown Role")
+    history_text = format_conversation_history_st(st.session_state.conversation_history, max_entries=50)
+    proposed_team_str = ', '.join(st.session_state.proposed_team_names)
+
+    prompt_core_for_speaker = VOTE_TEAM_DISCUSSION.format(proposed_team_str) + DISCUSSION_SUFFIX
+    full_prompt_for_speaker = prompt_core_for_speaker + f"\n\nConversation so far:\n{history_text}"
+
+    if current_speaker_name == "User":
+        st.subheader(f"Your ({st.session_state.user_role}) turn to speak.")
+        st.markdown(f"Leader **{st.session_state.current_leader_name}** proposed: **{proposed_team_str}**")
+        st.markdown(VOTE_TEAM_DISCUSSION.format(proposed_team_str))
+        
+        user_speech_discussion = st.text_area("Your opinion/statement:", key=f"user_speech_discuss_{st.session_state.current_quest_number}_{st.session_state.current_voting_attempt}_{st.session_state.current_speaker_idx}")
+        if st.button("Submit Statement", key=f"submit_user_discuss_{st.session_state.current_quest_number}_{st.session_state.current_voting_attempt}_{st.session_state.current_speaker_idx}"):
+            if not user_speech_discussion.strip():
+                st.error("Please provide a statement.")
+            else:
+                st.session_state.conversation_history.append({"speaker": "User", "message": user_speech_discussion})
+                add_to_game_log(user_speech_discussion, speaker=f"User ({st.session_state.user_role})")
+                st.session_state.current_speaker_idx += 1
+                st.rerun()
+
+    else: 
+        ai_speaker = get_player_object_by_name(current_speaker_name)
+        if not ai_speaker:
+            st.error(f"Could not find AI speaker object for {current_speaker_name}")
+            st.session_state.current_speaker_idx += 1
+            st.rerun()
+            return
+
+        with st.spinner(f"{current_speaker_name} is speaking..."):
+            response = ""
+            if current_speaker_name == "AgentB":
+                draft = ai_speaker.generate_reply(messages=[{"role": "user", "content": full_prompt_for_speaker}])
+                criteria = st.session_state.critic_agent.generate_reply(messages=[{"role": "user", "content": f"Draft response for {current_speaker_name}: {draft}"}])
+                scores = st.session_state.quantifier_agent.generate_reply(messages=[{"role": "user", "content": f"Criteria: {criteria}\n\nDraft by {current_speaker_name}: {draft}"}])
+                response = st.session_state.verifier_agent.generate_reply(messages=[{"role": "user", "content": f"Original Draft by {current_speaker_name}: {draft}\n\nEvaluation Criteria: {criteria}\n\nScores: {scores}\nRevise and provide final response."}])
+            elif current_speaker_name == "AgentC":
+                draft_response = ai_speaker.generate_reply(messages=[{"role": "user", "content": full_prompt_for_speaker}])
+                for _ in range(2): 
+                    feedback = st.session_state.feedback_agent_c.generate_reply(messages=[{"role": "user", "content": f"Provide feedback to improve this response from {current_speaker_name}:\n{draft_response}"}])
+                    draft_response = ai_speaker.generate_reply(messages=[{"role": "user", "content": f"Here is feedback on your previous message:\n{feedback}\n\nPlease revise your message as {current_speaker_name} accordingly. Return only the improved response."}])
+                response = draft_response
+            else:
+                response = ai_speaker.generate_reply(messages=[{"role": "user", "content": full_prompt_for_speaker}])
+
+        st.session_state.conversation_history.append({"speaker": current_speaker_name, "message": response})
+        add_to_game_log(response, speaker=f"{current_speaker_name} ({current_speaker_role})")
+        st.session_state.current_speaker_idx += 1
+        st.rerun()
+
+    if st.session_state.current_speaker_idx >= len(st.session_state.speech_turn_order):
+        add_to_game_log("Speech round concluded. Moving to vote on the team.")
+        st.session_state.game_stage = "VOTE_ON_TEAM_SETUP"
+
+
+def speech_round_st_():
     current_speaker_name = st.session_state.speech_turn_order[st.session_state.current_speaker_idx]
     current_speaker_role = st.session_state.players_with_roles.get(current_speaker_name, "Unknown Role")
     history_text = format_conversation_history_st(st.session_state.conversation_history)
@@ -790,7 +862,7 @@ with game_area_col:
         else:
             st.session_state.current_leader_idx = (st.session_state.current_leader_idx + 1) % len(st.session_state.turn_order)
             st.session_state.current_leader_name = st.session_state.turn_order[st.session_state.current_leader_idx]
-            st.session_state.game_stage = "QUEST_ROUND_START" 
+            st.session_state.game_stage = "QUEST_ROUND_START"
         st.rerun() # Replaced experimental_rerun
 
     elif st.session_state.game_stage == "ASSASSIN_GUESS_SETUP":
@@ -851,7 +923,7 @@ with history_col:
     with chat_container:
         # Ensure conversation_history exists
         if "conversation_history" in st.session_state and st.session_state.conversation_history:
-            for entry in st.session_state.conversation_history:
+            for entry in reversed(st.session_state.conversation_history):
                 speaker_display = entry['speaker']
                 if entry['speaker'] == "User" and "user_role" in st.session_state : # Check user_role exists
                     speaker_display = f"You ({st.session_state.user_role})"
@@ -864,6 +936,7 @@ with history_col:
                     st.markdown(f"**{speaker_display}:** {entry['message']}")
         else:
             st.write("No conversation yet.")
+
 
 # For debugging session state:
 # if st.sidebar.checkbox("Show Session State Debug", False):
