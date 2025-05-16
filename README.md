@@ -14,7 +14,7 @@ This project implements a Streamlit-based web interface for the social deduction
 ### 1. Clone this Repository
 
 ```bash
-git clone https://github.com/Rachelz1231/AvalonAI.git
+git clone https://github.com/lisaqhou4/AvalonAI
 ```
 
 ### 2. Create and Activate Virtual Environment (Recommended)
@@ -51,7 +51,8 @@ This app uses OpenAI's GPT-based agents. You must set your OpenAI API key before
 
 ### Set API_KEY in avalon_app.py
 
-```API_KEY = ""
+```
+API_KEY = ""
 ```
 
 ## ▶ Run the App
